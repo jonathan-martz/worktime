@@ -21,8 +21,11 @@ foreach($commands as $command){
 
     $project = explode('PhpstormProjects/', $command[29])[1];
 
+    $branch = exec('cd '. $command[29].' && git rev-parse --abbrev-ref HEAD');
+
     $data[] = [
-        'project' => $project
+        'project' => $project,
+        'branch' => $branch
     ];
 }
 
