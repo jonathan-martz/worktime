@@ -1,10 +1,20 @@
 <?php
 
-$output = exec('ps -aux | grep -i bin/phpstorm.sh');
+$phpstorm = exec('ps -aux | grep -i bin/phpstorm.sh');
+$locked = exec('gnome-screensaver-command -q | grep "is active"');
 
-$commands = explode(PHP_EOL, $output);
+if(empty($locked)){
+    $locked = false;
+}
+else{
+    $locked = true;
+}
 
-$data = [];
+$commands = explode(PHP_EOL, $phpstorm);
+
+$data = [
+    'locked' => $locked
+];
 
 foreach($commands as $command){
     $command = explode(' ', $command);
