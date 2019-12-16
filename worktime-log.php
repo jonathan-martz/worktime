@@ -27,6 +27,7 @@ foreach($commands as $command){
 }
 
 $ch = curl_init();
+curl_setopt($ch, CURLOPT_USERAGENT, 'worktime-logger');
 curl_setopt($ch, CURLOPT_POST,           1 );
 curl_setopt($ch, CURLOPT_URL, "https://api.jmartz.de");
 curl_setopt($ch, CURLOPT_POSTFIELDS,     json_encode($data, true) );
