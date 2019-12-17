@@ -1,4 +1,7 @@
 <?php
+/**
+ * @todo add support for vscode
+ */
 
 $filename = 'config.json';
 $file = file_get_contents($filename);
