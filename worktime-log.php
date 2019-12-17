@@ -6,6 +6,9 @@ $file = file_get_contents($filename);
 $config = json_decode($file, JSON_FORCE_OBJECT);
 
 $phpstorm = exec('ps -aux | grep -i '.$config['filter']);
+/**
+ * @todo add as requirement to README.md
+ */
 $locked = exec('gnome-screensaver-command -q | grep "is active"');
 
 if(empty($locked)){
@@ -46,3 +49,5 @@ curl_setopt($ch, CURLOPT_POSTFIELDS,     $json );
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 $output = curl_exec($ch);
 curl_close($ch);
+
+var_dump($json);
