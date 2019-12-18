@@ -3,16 +3,35 @@
  * @todo add support for vscode
  */
 
+function startsWith($haystack, $needle)
+{
+    $length = strlen($needle);
+    return (substr($haystack, 0, $length) === $needle);
+}
+
+function endsWith($haystack, $needle)
+{
+    $length = strlen($needle);
+    if ($length == 0) {
+        return true;
+    }
+
+    return (substr($haystack, -$length) === $needle);
+}
+
 $filename = 'config.json';
 $file = file_get_contents($filename);
 
 $config = json_decode($file, JSON_FORCE_OBJECT);
 
-$phpstorm = exec('ps -aux | grep -i '.$config['filter']);
+$command['phpstorm'] = 'ps -aux | grep -i '.$config['filter'];
+$find['phpstorm'] = exec($command['phpstorm']);
+
 /**
  * @todo add as requirement to README.md
+ * @todo fix prozess finder
  */
-$locked = exec('gnome-screensaver-command -q | grep "is active"');
+$locked = exec('gnome-screensaver-command -q | grep -i "is active"');
 
 if(empty($locked)){
     $locked = false;
@@ -21,7 +40,7 @@ else{
     $locked = true;
 }
 
-$commands = explode(PHP_EOL, $phpstorm);
+$commands = explode(PHP_EOL, $find['phpstorm']);
 
 $data = [
     'locked' => $locked
@@ -33,12 +52,14 @@ foreach($commands as $command){
     if(!empty($command[29])){
         $project = explode($config['folder']. '/', $command[29])[1];
 
-        $branch = exec('cd '. $command[29].' && git rev-parse --abbrev-ref HEAD');
+        if(!endsWith($command[29], 'phpstorm.sh')){
+            $branch = exec('cd '. $command[29].' && git rev-parse --abbrev-ref HEAD');
 
-        $data[] = [
-            'project' => $project,
-            'branch' => $branch
-        ];
+            $data[] = [
+                'project' => $project,
+                'branch' => $branch
+            ];
+        }
     }
 }
 
