@@ -1,5 +1,11 @@
 {
-  "folder": "PhpstormProjects",
-  "filter": "bin/phpstorm.sh",
-  "api": "https://api.jmartz.de"
+  "api": "https://api.jmartz.de",
+  "programs": [
+    {
+      "name": "phpstorm",
+      "folder": "PhpstormProjects",
+      "filter": "bin/phpstorm.sh",
+      "log": "phpstorm-prozess.log"
+    }
+  ]
 }
