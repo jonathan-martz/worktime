@@ -19,13 +19,16 @@ function endsWith($haystack, $needle)
     return (substr($haystack, -$length) === $needle);
 }
 
-$filename = 'config.json';
-$file = file_get_contents($filename);
+function loadConfig(){
+    $filename = 'config.json';
+    $file = file_get_contents($filename);
 
-$config = json_decode($file, JSON_FORCE_OBJECT);
+    return json_decode($file, JSON_FORCE_OBJECT);
+}
 
-$command['phpstorm'] = 'ps -aux | grep -i '.$config['filter'];
-$find['phpstorm'] = exec($command['phpstorm']);
+$config = loadConfig();
+
+$find['phpstorm'] = file_get_contents('phpstorm-prozess.log');
 
 /**
  * @todo add as requirement to README.md
@@ -46,21 +49,36 @@ $data = [
     'locked' => $locked
 ];
 
-foreach($commands as $command){
-    $command = explode(' ', $command);
+foreach($find as $command){
+    $prozesses = explode(PHP_EOL, $command);
+    if(!empty($prozesses)){
+        foreach ($prozesses as $prozess) {
+            $prozess = trim($prozess);
 
-    if(!empty($command[29])){
-        $project = explode($config['folder']. '/', $command[29])[1];
+            if(strpos($prozess, '~/PhpstormProjects') !== false){
+                $cmd = explode(' ', $prozess);
 
-        if(!endsWith($command[29], 'phpstorm.sh')){
-            $branch = exec('cd '. $command[29].' && git rev-parse --abbrev-ref HEAD');
+                if(count($cmd) == 4 || count($cmd) == 2){
+                    $cmd[1] = trim($cmd[1], '[');
+                    $cmd[1] = trim($cmd[1], ']');
+                    $name = $cmd[0];
+                    $branch = exec('cd '.$cmd[1].' && git rev-parse --abbrev-ref HEAD');
 
-            $data[] = [
-                'project' => $project,
-                'branch' => $branch
-            ];
+                    $data[$name] = [
+                        'name' => $name,
+                        'branch' => $branch,
+                    ];
+
+                    if(!empty($cmd[3])){
+                        $file = substr($cmd[3], 4);
+                        $data[$name]['file'] = $file;
+                    }
+                }
+            }
         }
     }
+
+
 }
 
 $json = json_encode($data, true);
@@ -73,5 +91,3 @@ curl_setopt($ch, CURLOPT_POSTFIELDS,     $json );
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 $output = curl_exec($ch);
 curl_close($ch);
-
-var_dump($json);
