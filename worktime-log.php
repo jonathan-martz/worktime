@@ -2,6 +2,7 @@
 function startsWith($haystack, $needle)
 {
     $length = strlen($needle);
+
     return (substr($haystack, 0, $length) === $needle);
 }
 
@@ -15,7 +16,8 @@ function endsWith($haystack, $needle)
     return (substr($haystack, -$length) === $needle);
 }
 
-function loadConfig(){
+function loadConfig()
+{
     $filename = 'config.json';
     $file = file_get_contents($filename);
 
@@ -32,44 +34,97 @@ $config = loadConfig();
  */
 $locked = exec('gnome-screensaver-command -q | grep -i "is active"');
 
-if(empty($locked)){
+if (empty($locked)) {
     $locked = false;
-}
-else{
+} else {
     $locked = true;
 }
 
-$data = [
-    'locked' => $locked
-];
+$data = ['locked' => $locked];
 
-foreach($config['programs'] as $key => $program){
-    $find[$program['name']] = file_get_contents($program['log']);
+function isPhpStorm($prozess)
+{
+    if (strpos($prozess, '~/PhpstormProjects/') !== false && strpos($prozess, 'Atom') === false) {
+        return true;
+    }
+
+    return false;
+}
+
+function dataPhpStorm($prozess, $program)
+{
+    $prozess = trim($prozess);
+    if (strpos($prozess, '@') === false) {
+        $cmd = explode(' ', $prozess);
+
+        if (strpos($prozess, $program['folder']) !== false && strpos($prozess, 'Atom') === false) {
+            if (count($cmd) == 4 || count($cmd) == 2) {
+                $cmd[1] = trim($cmd[1], '[');
+                $cmd[1] = trim($cmd[1], ']');
+                $name = $cmd[0];
+                $branch = exec('cd ' . $cmd[1] . ' && git rev-parse --abbrev-ref HEAD');
+
+                $data = ['name' => $name, 'branch' => $branch,];
+
+                if (!empty($cmd[3])) {
+                    $file = substr($cmd[3], 4);
+                    $data['file'] = $file;
+                }
+            }
+        }
+    }
+
+    return (!empty($data)) ? $data : null;
+}
+
+function isAtom($prozess)
+{
+    var_dump($prozess);
+    if (strpos($prozess, 'Atom') !== false) {
+        return true;
+    }
+
+    return false;
+}
+
+function dataAtom($prozess, $program)
+{
+    $prozess = trim($prozess);
+    if (strpos($prozess, '@') === false && strpos($prozess, $program['filter']) !== false) {
+        $cmd = explode(' ', $prozess);
+        if(count($cmd) == 5){
+            $name = trim(str_replace('~/'.$program['folder'], '', $cmd[2]), '/');
+            $branch = exec('cd '.$cmd[2].' && git rev-parse --abbrev-ref HEAD');
+
+            $data = [
+                'name' => $name,
+                'branch' => $branch
+            ];
+        }
+    }
+
+    return (!empty($data)) ? $data : null;
+}
+
+foreach ($config['programs'] as $key => $program) {
+    $find[$program['name']] = file_get_contents('prozess.log');
     $commands = explode(PHP_EOL, $find[$program['name']]);
 
-    foreach($commands as $command){
+    foreach ($commands as $command) {
         $prozesses = explode(PHP_EOL, $command);
-        if(!empty($prozesses)){
+        if (!empty($prozesses)) {
             foreach ($prozesses as $prozess) {
-                $prozess = trim($prozess);
-                if(strpos($prozess, '~/'.$program['folder']) !== false && strpos($prozess, '@') === false){
-                    $cmd = explode(' ', $prozess);
 
-                    if(count($cmd) == 4 || count($cmd) == 2){
-                        $cmd[1] = trim($cmd[1], '[');
-                        $cmd[1] = trim($cmd[1], ']');
-                        $name = $cmd[0];
-                        $branch = exec('cd '.$cmd[1].' && git rev-parse --abbrev-ref HEAD');
-
-                        $data[$name] = [
-                            'name' => $name,
-                            'branch' => $branch,
-                        ];
-
-                        if(!empty($cmd[3])){
-                            $file = substr($cmd[3], 4);
-                            $data[$name]['file'] = $file;
-                        }
+                if (isPhpStorm($prozess)) {
+                    $new = dataPhpStorm($prozess, $program);
+                    if ($new !== null) {
+                        $data['program'][$program['name']][$new['name']] = $new;
+                    }
+                } else if (isAtom($prozess)) {
+                    $new = dataAtom($prozess, $program);
+                    if ($new !== null) {
+                        var_dump('isAtom: '. $new['name']);
+                        $data['program'][$program['name']][$new['name']] = $new;
                     }
                 }
             }
@@ -79,11 +134,13 @@ foreach($config['programs'] as $key => $program){
 
 $json = json_encode($data, true);
 
+var_dump($json);
+
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_USERAGENT, 'worktime-logger');
-curl_setopt($ch, CURLOPT_POST,           1 );
+curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_URL, $config['api']);
-curl_setopt($ch, CURLOPT_POSTFIELDS,     $json );
+curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-$output = curl_exec($ch);
+// $output = curl_exec($ch);
 curl_close($ch);

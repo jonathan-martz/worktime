@@ -4,8 +4,12 @@
     {
       "name": "phpstorm",
       "folder": "PhpstormProjects",
-      "filter": "bin/phpstorm.sh",
-      "log": "phpstorm-prozess.log"
+      "filter": "bin/phpstorm.sh"
+    },
+    {
+      "name": "atom",
+      "folder": "PhpstormProjects",
+      "filter": "Atom"
     }
   ]
 }
