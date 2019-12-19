@@ -32,6 +32,7 @@ $find['phpstorm'] = file_get_contents('phpstorm-prozess.log');
 
 /**
  * @todo add as requirement to README.md
+ * @todo add wmctrl as requirement to README.md
  * @todo fix prozess finder
  */
 $locked = exec('gnome-screensaver-command -q | grep -i "is active"');
