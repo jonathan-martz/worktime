@@ -79,8 +79,6 @@ foreach($config['programs'] as $key => $program){
 
 $json = json_encode($data, true);
 
-var_dump($json);
-
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_USERAGENT, 'worktime-logger');
 curl_setopt($ch, CURLOPT_POST,           1 );
