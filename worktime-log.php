@@ -30,7 +30,6 @@ $config = loadConfig();
  * @todo add as requirement to README.md
  * @todo add wmctrl as requirement to README.md
  * @todo add support for vscode
- * @todo add support for atom
  */
 $locked = exec('gnome-screensaver-command -q | grep -i "is active"');
 
@@ -42,12 +41,11 @@ if (empty($locked)) {
 
 $data = ['locked' => $locked];
 
-function isPhpStorm($prozess)
+function isPhpStorm($prozess,$program)
 {
-    if (strpos($prozess, '~/PhpstormProjects/') !== false && strpos($prozess, 'Atom') === false) {
+    if (strpos($prozess, '~/PhpstormProjects/') !== false && strpos($prozess, 'Atom') === false  && $program['name'] == 'phpstorm') {
         return true;
     }
-
     return false;
 }
 
@@ -64,7 +62,7 @@ function dataPhpStorm($prozess, $program)
                 $name = $cmd[0];
                 $branch = exec('cd ' . $cmd[1] . ' && git rev-parse --abbrev-ref HEAD');
 
-                $data = ['name' => $name, 'branch' => $branch,];
+                $data = ['name' => $name, 'branch' => $branch, 'program' => 'phpstorm'];
 
                 if (!empty($cmd[3])) {
                     $file = substr($cmd[3], 4);
@@ -77,13 +75,11 @@ function dataPhpStorm($prozess, $program)
     return (!empty($data)) ? $data : null;
 }
 
-function isAtom($prozess)
+function isAtom($prozess, $program)
 {
-    var_dump($prozess);
-    if (strpos($prozess, 'Atom') !== false) {
+    if (strpos($prozess, 'Atom') !== false && $program['name'] == 'atom') {
         return true;
     }
-
     return false;
 }
 
@@ -114,16 +110,14 @@ foreach ($config['programs'] as $key => $program) {
         $prozesses = explode(PHP_EOL, $command);
         if (!empty($prozesses)) {
             foreach ($prozesses as $prozess) {
-
-                if (isPhpStorm($prozess)) {
+                if (isPhpStorm($prozess, $program)){
                     $new = dataPhpStorm($prozess, $program);
                     if ($new !== null) {
                         $data['program'][$program['name']][$new['name']] = $new;
                     }
-                } else if (isAtom($prozess)) {
+                } else if (isAtom($prozess, $program)) {
                     $new = dataAtom($prozess, $program);
                     if ($new !== null) {
-                        var_dump('isAtom: '. $new['name']);
                         $data['program'][$program['name']][$new['name']] = $new;
                     }
                 }
