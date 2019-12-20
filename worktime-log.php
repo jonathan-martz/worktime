@@ -29,7 +29,6 @@ $config = loadConfig();
 /**
  * @todo add as requirement to README.md
  * @todo add wmctrl as requirement to README.md
- * @todo add support for vscode
  */
 $locked = exec('gnome-screensaver-command -q | grep -i "is active"');
 
@@ -62,7 +61,7 @@ function dataPhpStorm($prozess, $program)
                 $name = $cmd[0];
                 $branch = exec('cd ' . $cmd[1] . ' && git rev-parse --abbrev-ref HEAD');
 
-                $data = ['name' => $name, 'branch' => $branch, 'program' => 'phpstorm'];
+                $data = ['name' => $name, 'branch' => $branch];
 
                 if (!empty($cmd[3])) {
                     $file = substr($cmd[3], 4);
@@ -102,6 +101,43 @@ function dataAtom($prozess, $program)
     return (!empty($data)) ? $data : null;
 }
 
+function isVsCode($prozess, $program){
+    if($program['name'] == 'vscode' && strpos($prozess, $program['filter'])){
+        return true;
+    }
+
+    return false;
+}
+
+function dataVsCode($prozess, $program){
+    $prozess = trim($prozess);
+    if (strpos($prozess, '@') === false && strpos($prozess, $program['filter']) !== false) {
+        $cmd = explode(' ', $prozess);
+
+        if(count($cmd) == 5){
+            $name = trim(str_replace('~/'.$program['folder'], '', $cmd[0]), '/');
+            $branch = exec('cd ~/'.$program['folder'].'/'.$cmd[0].' && git rev-parse --abbrev-ref HEAD');
+
+            $data = [
+                'name' => $name,
+                'branch' => $branch
+            ];
+        }
+        else if(count($cmd) == 7){
+            $name = trim(str_replace('~/'.$program['folder'], '', $cmd[2]), '/');
+            $branch = exec('cd ~/'.$program['folder'].'/'.$cmd[2].' && git rev-parse --abbrev-ref HEAD');
+
+            $data = [
+                'name' => $name,
+                'branch' => $branch,
+                'file' => $cmd[0]
+            ];
+        }
+    }
+
+    return (!empty($data)) ? $data : null;
+}
+
 foreach ($config['programs'] as $key => $program) {
     $find[$program['name']] = file_get_contents('prozess.log');
     $commands = explode(PHP_EOL, $find[$program['name']]);
@@ -121,6 +157,12 @@ foreach ($config['programs'] as $key => $program) {
                         $data['program'][$program['name']][$new['name']] = $new;
                     }
                 }
+                else if (isVsCode($prozess, $program)) {
+                    $new = dataVsCode($prozess, $program);
+                    if ($new !== null) {
+                        $data['program'][$program['name']][$new['name']] = $new;
+                    }
+                }
             }
         }
     }
@@ -128,13 +170,11 @@ foreach ($config['programs'] as $key => $program) {
 
 $json = json_encode($data, true);
 
-var_dump($json);
-
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_USERAGENT, 'worktime-logger');
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_URL, $config['api']);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-// $output = curl_exec($ch);
+$output = curl_exec($ch);
 curl_close($ch);

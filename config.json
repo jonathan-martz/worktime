@@ -10,6 +10,11 @@
       "name": "atom",
       "folder": "PhpstormProjects",
       "filter": "Atom"
+    },
+    {
+      "name": "vscode",
+      "folder": "PhpstormProjects",
+      "filter": "Visual Studio Code"
     }
   ]
 }
