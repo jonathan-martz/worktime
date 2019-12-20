@@ -24,22 +24,6 @@ function loadConfig()
     return json_decode($file, JSON_FORCE_OBJECT);
 }
 
-$config = loadConfig();
-
-/**
- * @todo add as requirement to README.md
- * @todo add wmctrl as requirement to README.md
- */
-$locked = exec('gnome-screensaver-command -q | grep -i "is active"');
-
-if (empty($locked)) {
-    $locked = false;
-} else {
-    $locked = true;
-}
-
-$data = ['locked' => $locked];
-
 function isPhpStorm($prozess,$program)
 {
     if (strpos($prozess, '~/PhpstormProjects/') !== false && strpos($prozess, 'Atom') === false  && $program['name'] == 'phpstorm') {
@@ -137,6 +121,32 @@ function dataVsCode($prozess, $program){
 
     return (!empty($data)) ? $data : null;
 }
+
+function checkRequirements(){
+    $req['gnome-screensaver-command'] = exec('whereis gnome-screensaver-command');
+    $req['wmctrl'] = exec('whereis wmctrl');
+
+    foreach($req as $key => $value){
+        if(strpos($req[$key], 'not found') !== false){
+            throw new \Exception('Requirements missing ('.$key.')');
+        }
+    }
+}
+
+checkRequirements();
+
+$config = loadConfig();
+
+$locked = exec('gnome-screensaver-command -q | grep -i "is active"');
+
+if (empty($locked)) {
+    $locked = false;
+} else {
+    $locked = true;
+}
+
+$data = ['locked' => $locked];
+
 
 foreach ($config['programs'] as $key => $program) {
     $find[$program['name']] = file_get_contents('prozess.log');
