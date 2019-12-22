@@ -1,5 +1,5 @@
 {
-  "api": "https://api.jmartz.de",
+  "api": "https://webhook.jmartz.de/worktime",
   "programs": [
     {
       "name": "phpstorm",

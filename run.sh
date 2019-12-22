@@ -17,5 +17,7 @@ xhost +
 
 git pull
 
+xdotool getwindowfocus getwindowname > current.log
+
 wmctrl -l|awk '{$3=""; $2=""; $1=""; print $0}' > prozess.log
 php worktime-log.php

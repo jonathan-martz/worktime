@@ -132,33 +132,59 @@ if (empty($locked)) {
     $locked = true;
 }
 
+$current = file_get_contents('current.log');
+
+function isCurrent($command,$current,$program){
+    if(trim($command) == trim($current)){
+        return true;
+    }
+    return false;
+}
+
 if(!$locked){
-  $data = ['locked' => $locked];
-
-
   foreach ($config['programs'] as $key => $program) {
       $find[$program['name']] = file_get_contents('prozess.log');
       $commands = explode(PHP_EOL, $find[$program['name']]);
 
       foreach ($commands as $command) {
           $prozesses = explode(PHP_EOL, $command);
+
           if (!empty($prozesses)) {
               foreach ($prozesses as $prozess) {
+
                   if (isPhpStorm($prozess, $program)){
                       $new = dataPhpStorm($prozess, $program);
                       if ($new !== null) {
                           $data['program'][$program['name']][$new['name']] = $new;
+
+                          $isCurrent = isCurrent($command,$current,$program);
+                          if($isCurrent){
+                              $new['program'] = $program['name'];
+                              $data['current'] = $new;
+                          }
                       }
                   } else if (isAtom($prozess, $program)) {
                       $new = dataAtom($prozess, $program);
                       if ($new !== null) {
                           $data['program'][$program['name']][$new['name']] = $new;
+
+                          $isCurrent = isCurrent($command,$current,$program);
+                          if($isCurrent){
+                              $new['program'] = $program['name'];
+                              $data['current'] = $new;
+                          }
                       }
                   }
                   else if (isVsCode($prozess, $program)) {
                       $new = dataVsCode($prozess, $program);
                       if ($new !== null) {
                           $data['program'][$program['name']][$new['name']] = $new;
+
+                          $isCurrent = isCurrent($command,$current,$program);
+                          if($isCurrent){
+                              $new['program'] = $program['name'];
+                              $data['current'] = $new;
+                          }
                       }
                   }
               }
