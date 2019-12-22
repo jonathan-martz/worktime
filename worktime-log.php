@@ -122,19 +122,6 @@ function dataVsCode($prozess, $program){
     return (!empty($data)) ? $data : null;
 }
 
-function checkRequirements(){
-    $req['gnome-screensaver-command'] = exec('whereis gnome-screensaver-command');
-    $req['wmctrl'] = exec('whereis wmctrl');
-
-    foreach($req as $key => $value){
-        if(strpos($req[$key], 'not found') !== false){
-            throw new \Exception('Requirements missing ('.$key.')');
-        }
-    }
-}
-
-checkRequirements();
-
 $config = loadConfig();
 
 $locked = exec('gnome-screensaver-command -q | grep -i "is active"');
@@ -145,46 +132,48 @@ if (empty($locked)) {
     $locked = true;
 }
 
-$data = ['locked' => $locked];
+if(!$locked){
+  $data = ['locked' => $locked];
 
 
-foreach ($config['programs'] as $key => $program) {
-    $find[$program['name']] = file_get_contents('prozess.log');
-    $commands = explode(PHP_EOL, $find[$program['name']]);
+  foreach ($config['programs'] as $key => $program) {
+      $find[$program['name']] = file_get_contents('prozess.log');
+      $commands = explode(PHP_EOL, $find[$program['name']]);
 
-    foreach ($commands as $command) {
-        $prozesses = explode(PHP_EOL, $command);
-        if (!empty($prozesses)) {
-            foreach ($prozesses as $prozess) {
-                if (isPhpStorm($prozess, $program)){
-                    $new = dataPhpStorm($prozess, $program);
-                    if ($new !== null) {
-                        $data['program'][$program['name']][$new['name']] = $new;
-                    }
-                } else if (isAtom($prozess, $program)) {
-                    $new = dataAtom($prozess, $program);
-                    if ($new !== null) {
-                        $data['program'][$program['name']][$new['name']] = $new;
-                    }
-                }
-                else if (isVsCode($prozess, $program)) {
-                    $new = dataVsCode($prozess, $program);
-                    if ($new !== null) {
-                        $data['program'][$program['name']][$new['name']] = $new;
-                    }
-                }
-            }
-        }
-    }
+      foreach ($commands as $command) {
+          $prozesses = explode(PHP_EOL, $command);
+          if (!empty($prozesses)) {
+              foreach ($prozesses as $prozess) {
+                  if (isPhpStorm($prozess, $program)){
+                      $new = dataPhpStorm($prozess, $program);
+                      if ($new !== null) {
+                          $data['program'][$program['name']][$new['name']] = $new;
+                      }
+                  } else if (isAtom($prozess, $program)) {
+                      $new = dataAtom($prozess, $program);
+                      if ($new !== null) {
+                          $data['program'][$program['name']][$new['name']] = $new;
+                      }
+                  }
+                  else if (isVsCode($prozess, $program)) {
+                      $new = dataVsCode($prozess, $program);
+                      if ($new !== null) {
+                          $data['program'][$program['name']][$new['name']] = $new;
+                      }
+                  }
+              }
+          }
+      }
+  }
+
+  $json = json_encode($data, true);
+
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_USERAGENT, 'worktime-logger');
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_URL, $config['api']);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  $output = curl_exec($ch);
+  curl_close($ch);
 }
-
-$json = json_encode($data, true);
-
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_USERAGENT, 'worktime-logger');
-curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_URL, $config['api']);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-$output = curl_exec($ch);
-curl_close($ch);
