@@ -153,6 +153,9 @@ if(!$locked){
 
                   if (isPhpStorm($prozess, $program)){
                       $new = dataPhpStorm($prozess, $program);
+                      /**
+                       * @todo move dublicated code to function
+                       */
                       if ($new !== null) {
                           $data['program'][$program['name']][$new['name']] = $new;
 
