@@ -45,7 +45,7 @@ function dataPhpStorm($prozess, $program)
                 $name = $cmd[0];
                 $branch = exec('cd ' . $cmd[1] . ' && git rev-parse --abbrev-ref HEAD');
 
-                $data = ['name' => $name, 'branch' => $branch];
+                $data = ['name' => $name, 'branch' => $branch, 'program' => $program['name']];
 
                 if (!empty($cmd[3])) {
                     $file = substr($cmd[3], 4);
@@ -75,10 +75,7 @@ function dataAtom($prozess, $program)
             $name = trim(str_replace('~/'.$program['folder'], '', $cmd[2]), '/');
             $branch = exec('cd '.$cmd[2].' && git rev-parse --abbrev-ref HEAD');
 
-            $data = [
-                'name' => $name,
-                'branch' => $branch
-            ];
+            $data = ['name' => $name, 'branch' => $branch, 'program' => $program['name']];
         }
     }
 
@@ -104,7 +101,8 @@ function dataVsCode($prozess, $program){
 
             $data = [
                 'name' => $name,
-                'branch' => $branch
+                'branch' => $branch,
+                'program' => $program['name']
             ];
         }
         else if(count($cmd) == 7){
@@ -114,7 +112,8 @@ function dataVsCode($prozess, $program){
             $data = [
                 'name' => $name,
                 'branch' => $branch,
-                'file' => $cmd[0]
+                'file' => $cmd[0],
+                'program' => $program['name']
             ];
         }
     }
