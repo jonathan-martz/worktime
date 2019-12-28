@@ -1,4 +1,7 @@
 <?php
+
+$current = file_get_contents('current.log');
+
 function startsWith($haystack, $needle)
 {
     $length = strlen($needle);
@@ -121,6 +124,29 @@ function dataVsCode($prozess, $program){
     return (!empty($data)) ? $data : null;
 }
 
+function isCurrent($command,$current,$program){
+    if(trim($command) == trim($current)){
+        return true;
+    }
+    return false;
+}
+
+function generateData($data, $new, $program, $current, $command){
+    if ($new !== null) {
+        $data['program'][$program['name']][$new['name']] = $new;
+
+        $isCurrent = isCurrent($command,$current,$program);
+        if($isCurrent){
+            $new['program'] = $program['name'];
+            $data['current'] = $new;
+        }
+
+        return $data;
+    }
+
+    return false;
+}
+
 $config = loadConfig();
 
 $locked = exec('gnome-screensaver-command -q | grep -i "is active"');
@@ -131,14 +157,7 @@ if (empty($locked)) {
     $locked = true;
 }
 
-$current = file_get_contents('current.log');
-
-function isCurrent($command,$current,$program){
-    if(trim($command) == trim($current)){
-        return true;
-    }
-    return false;
-}
+$data = [];
 
 if(!$locked){
   foreach ($config['programs'] as $key => $program) {
@@ -153,45 +172,23 @@ if(!$locked){
 
                   if (isPhpStorm($prozess, $program)){
                       $new = dataPhpStorm($prozess, $program);
-                      /**
-                       * @todo move dublicated code to function
-                       */
-                      if ($new !== null) {
-                          $data['program'][$program['name']][$new['name']] = $new;
+                      $data = generateData($data, $new, $program, $current, $command);
 
-                          $isCurrent = isCurrent($command,$current,$program);
-                          if($isCurrent){
-                              $new['program'] = $program['name'];
-                              $data['current'] = $new;
-                          }
-                      }
                   } else if (isAtom($prozess, $program)) {
                       $new = dataAtom($prozess, $program);
-                      if ($new !== null) {
-                          $data['program'][$program['name']][$new['name']] = $new;
-
-                          $isCurrent = isCurrent($command,$current,$program);
-                          if($isCurrent){
-                              $new['program'] = $program['name'];
-                              $data['current'] = $new;
-                          }
-                      }
+                      $data = generateData($data, $new, $program, $current, $command);
                   }
                   else if (isVsCode($prozess, $program)) {
                       $new = dataVsCode($prozess, $program);
-                      if ($new !== null) {
-                          $data['program'][$program['name']][$new['name']] = $new;
-
-                          $isCurrent = isCurrent($command,$current,$program);
-                          if($isCurrent){
-                              $new['program'] = $program['name'];
-                              $data['current'] = $new;
-                          }
-                      }
+                      $data = generateData($data, $new, $program, $current, $command);
                   }
               }
           }
       }
+  }
+
+  if(empty($data['current'])){
+      $data['current'] = $current;
   }
 
   $json = json_encode($data, true);
@@ -204,4 +201,8 @@ if(!$locked){
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
   $output = curl_exec($ch);
   curl_close($ch);
+
+
+
+  var_dump($output);
 }
