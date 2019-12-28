@@ -4,8 +4,7 @@
   "license": "MIT",
   "require": {
     "php": "^7.1|^7.2|^7.3|^7.4",
-    "ext-json": "*",
-    "laravel/lumen-framework": "^5.6|^6.0"
+    "ext-json": "*"
   },
   "authors": [
     {
